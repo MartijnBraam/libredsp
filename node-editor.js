@@ -89,18 +89,23 @@ export class SocketOutput extends Socket {
 }
 
 export class SocketInput extends Socket {
-    constructor(label, type, value, min, max) {
+    constructor(label, type, value, min, max, editable) {
         super(1, true, type);
         this.label = label;
         this.value = value;
         this.min = min;
         this.max = max;
+        this.editable = editable;
+    }
+
+    formatter(value) {
+        return value;
     }
 
     draw(ctx, x, y, w, scale, connected) {
         const m = 10.0 * scale;
 
-        if (connected) {
+        if (connected || !this.editable) {
             ctx.fillStyle = '#e1e1e1';
             ctx.fillText(this.label, x + m + (!connected ? m : 0), y + (14 * scale));
         } else {
@@ -124,8 +129,13 @@ export class SocketInput extends Socket {
                 ctx.fill();
             }
 
+            ctx.save();
             ctx.fillStyle = '#e1e1e1';
             ctx.fillText(this.label, x + m + (!connected ? m : 0), y + (14 * scale));
+
+            ctx.textAlign = 'right';
+            ctx.fillText(this.formatter(this.value), x + width, y + (14 * scale));
+            ctx.restore();
         }
     }
 }
@@ -162,10 +172,10 @@ export class ControlDropdown extends Control {
 }
 
 export class ControlCheckbox extends Control {
-    constructor(label, checked) {
+    constructor(label, value) {
         super(1);
         this.label = label;
-        this.checked = checked;
+        this.value = value;
     }
 
     draw(ctx, x, y, w, scale, connected) {
@@ -173,7 +183,7 @@ export class ControlCheckbox extends Control {
         const chk = 10;
         ctx.save();
 
-        if (this.checked) {
+        if (this.value) {
             ctx.fillStyle = '#4772b3';
         } else {
             ctx.fillStyle = '#545454';
@@ -182,7 +192,7 @@ export class ControlCheckbox extends Control {
         ctx.roundRect(x + m, y + ((GRID - chk) / 2 * scale), chk * scale, chk * scale, 2 * scale);
         ctx.fill();
 
-        if (this.checked) {
+        if (this.value) {
             drawCheck(ctx, x + m + (chk / 2 * scale), y + (GRID / 2 * scale), 6 * scale, '#e1e1e1');
         }
 
@@ -432,7 +442,6 @@ class NodeEditor {
 
             switch (this.mode) {
                 case M_PAN:
-                    console.log(event);
                     this.panx = this.startPanx + event.offsetX - this.pressx;
                     this.pany = this.startPany + event.offsetY - this.pressy;
                     this.repaint();

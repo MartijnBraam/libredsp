@@ -61,7 +61,19 @@ class NodeTemplate {
             if (sd.dir === "out") {
                 sockets.push(new SocketOutput(label, stype));
             } else {
-                sockets.push(new SocketInput(label, stype, 0, sd.min, sd.max));
+                const so = new SocketInput(label, stype, 0, sd.min, sd.max, true);
+                switch (stype) {
+                    case CONN_DB:
+                        so.formatter = (value) => {
+                            return value + " dB";
+                        }
+                        break;
+                    case CONN_MONO:
+                    case CONN_STEREO:
+                        so.editable = false;
+                        break;
+                }
+                sockets.push(so);
             }
         }
 
@@ -109,9 +121,61 @@ export default class LibreDSP {
             for (let i = 0; i < data.nodes.length; i++) {
                 const nd = data.nodes[i];
                 const node = this.nodeTemplates[nd.type].Make(nd.x, nd.y, nd.width);
+
+                for (let c = 0; c < node.controls.length; c++) {
+                    const ctrl = node.controls[c];
+                    if (ctrl.label in nd.state) {
+                        ctrl.value = nd.state[ctrl.label];
+                    }
+                }
+
+                for (let s = 0; s < node.sockets.length; s++) {
+                    const so = node.sockets[s];
+                    if (!so.editable) continue;
+                    if (!so.isInput) continue;
+                    if (so.label in nd.state) {
+                        so.value = nd.state[so.label];
+                    }
+                }
+
                 this.editor.AddNode(node);
             }
-            console.log("STATE", data);
+
+            this.getCurrentState();
         });
+    }
+
+    getCurrentState() {
+        const res = {
+            "nodes": [],
+            "links": [],
+        }
+        for (let i = 0; i < this.editor.nodes.length; i++) {
+            const node = this.editor.nodes[i];
+            const ns = {};
+            for (let c = 0; c < node.controls.length; c++) {
+                const ctrl = node.controls[c];
+                if ("value" in ctrl) {
+                    ns[ctrl.label] = ctrl.value;
+                }
+            }
+            for (let s = 0; s < node.sockets.length; s++) {
+                const so = node.sockets[s];
+                if (!so.editable) continue;
+                if (!so.isInput) continue;
+                ns[so.label] = so.value;
+            }
+
+            res.nodes.push({
+                "type": node.id,
+                "x": node.x,
+                "y": node.y,
+                "width": node.width,
+                "state": ns,
+            });
+            console.log("NODE", node);
+        }
+        console.log("STATE", res);
+        return res;
     }
 }
