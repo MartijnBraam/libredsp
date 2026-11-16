@@ -62,6 +62,18 @@ export class Control {
     draw(ctx, x, y, w, scale) {
 
     }
+
+    mouseDown(nsx, nsy, event) {
+        return false;
+    }
+
+    mouseUp(nsx, nsy, event) {
+
+    }
+
+    mouseMove(nsx, nsy, event) {
+
+    }
 }
 
 export class Socket extends Control {
@@ -96,22 +108,65 @@ export class SocketInput extends Socket {
         this.min = min;
         this.max = max;
         this.editable = editable;
+
+        this.startx = null;
+        this.startv = null;
+        this.moving = false;
+
+        this.w = 1;
+        this.s = 1;
     }
 
     formatter(value) {
-        return value;
+        return value.toFixed(1);
+    }
+
+    mouseDown(nsx, nsy) {
+        this.startx = nsx;
+        this.startv = this.value;
+        this.moving = false;
+        return true;
+    }
+
+    mouseMove(nsx, nsy, event) {
+        if (this.startx !== nsx) {
+            this.moving = true;
+        }
+        const distance = nsx - this.startx;
+        const scale = (this.max - this.min) / (this.w - (GRID * this.s));
+        const shift = event.shiftKey ? 0.1 : 1;
+        this.value = this.startv + (distance * scale * shift);
+        if (this.value > this.max) {
+            this.value = this.max;
+        }
+        if (this.value < this.min) {
+            this.value = this.min;
+        }
+    }
+
+    mouseUp(nsx, nsy) {
+        this.moving = false;
+        if (nsx === this.startx) {
+            console.log("TODO: spawn form field to enter exact value");
+        }
     }
 
     draw(ctx, x, y, w, scale, connected) {
         const m = 10.0 * scale;
-
+        this.w = w;
+        this.s = scale;
         if (connected || !this.editable) {
             ctx.fillStyle = '#e1e1e1';
             ctx.fillText(this.label, x + m + (!connected ? m : 0), y + (14 * scale));
         } else {
             const width = w - (2 * m);
 
-            ctx.fillStyle = '#545454';
+            if (this.moving) {
+                ctx.fillStyle = '#222222';
+            } else {
+                ctx.fillStyle = '#545454';
+            }
+
             ctx.beginPath();
             ctx.roundRect(x + m, y + (2 * scale), width, (GRID - 4) * scale, 4 * scale);
             ctx.fill();
@@ -336,6 +391,8 @@ class NodeEditor {
         this.linkNode = null;
         this.linkSock = null;
         this.linkFromOutput = false;
+        this.valueNode = null;
+        this.valueSock = null;
 
         this.nodes = [];
         this.links = [];
@@ -413,6 +470,23 @@ class NodeEditor {
                 }
             }
 
+            // Check if clicking a control
+            const hitControl = this.findControlOnPosition(selectedNode, nsx, nsy);
+            if (hitControl[0] !== null) {
+                if (hitControl[0]) {
+                    // Input socket
+                    if (selectedNode.sockets[hitControl[1]].mouseDown(nsx, nsy, event)) {
+                        this.mode = M_VALUE;
+                        this.valueNode = selectedNode;
+                        this.valueSock = hitControl[1];
+                        this.repaint();
+                        return;
+                    }
+                } else {
+                    // Control
+                }
+            }
+
             // Start moving the node
             this.mode = M_MOVE;
             this.el.style.cursor = 'all-scroll';
@@ -449,6 +523,10 @@ class NodeEditor {
                 case M_LINK:
                     this.movex = event.offsetX;
                     this.movey = event.offsetY;
+                    this.repaint();
+                    break;
+                case M_VALUE:
+                    this.valueNode.sockets[this.valueSock].mouseMove(nsx, nsy, event);
                     this.repaint();
                     break;
                 case M_MOVE:
@@ -518,6 +596,9 @@ class NodeEditor {
                     } else {
                         this.links.push(new Link(selectedNodeIdx, selectedSocketIdx, this.linkNode, this.linkSock));
                     }
+                    break;
+                case M_VALUE:
+                    this.valueNode.sockets[this.valueSock].mouseUp(nsx, nsy, event);
                     break;
             }
             this.mode = M_NONE;
@@ -591,6 +672,31 @@ class NodeEditor {
             return i;
         }
         return null;
+    }
+
+    findControlOnPosition(node, nsx, nsy) {
+        for (let i = 0; i < node.sockets.length; i++) {
+            const so = node.sockets[i];
+            if (!so.isInput) continue;
+
+            const soy1 = node.y + (so.row * GRID);
+            const soy2 = node.y + ((so.row + 1) * GRID);
+            if (soy1 > nsy || soy2 < nsy) {
+                continue
+            }
+            return [true, i];
+        }
+        for (let i = 0; i < node.controls.length; i++) {
+            const ctrl = node.controls[i];
+
+            const soy1 = node.y + (ctrl.row * GRID);
+            const soy2 = node.y + ((ctrl.row + ctrl.height) * GRID);
+            if (soy1 > nsy || soy2 < nsy) {
+                continue
+            }
+            return [false, i];
+        }
+        return [null, null];
     }
 
     drawGrid() {

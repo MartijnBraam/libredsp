@@ -65,7 +65,7 @@ class NodeTemplate {
                 switch (stype) {
                     case CONN_DB:
                         so.formatter = (value) => {
-                            return value + " dB";
+                            return value.toFixed(1) + " dB";
                         }
                         break;
                     case CONN_MONO:
