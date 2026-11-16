@@ -121,7 +121,7 @@ export class SocketInput extends Socket {
         return value.toFixed(1);
     }
 
-    mouseDown(nsx, nsy) {
+    mouseDown(nsx, nsy, event) {
         this.startx = nsx;
         this.startv = this.value;
         this.moving = false;
@@ -144,7 +144,7 @@ export class SocketInput extends Socket {
         }
     }
 
-    mouseUp(nsx, nsy) {
+    mouseUp(nsx, nsy, event) {
         this.moving = false;
         if (nsx === this.startx) {
             console.log("TODO: spawn form field to enter exact value");
@@ -196,10 +196,22 @@ export class SocketInput extends Socket {
 }
 
 export class ControlDropdown extends Control {
-    constructor(label, values) {
+    constructor(label, values, prefix) {
         super(1);
         this.label = label;
         this.values = values;
+        this.prefix = prefix;
+        this.value = Object.keys(values)[0];
+
+        this.cLeft = 0;
+        this.open = false;
+    }
+
+    mouseDown(nsx, nsy, event) {
+        if (nsx < this.cLeft) {
+            return false;
+        }
+        return true;
     }
 
     draw(ctx, x, y, w, scale, connected) {
@@ -207,10 +219,18 @@ export class ControlDropdown extends Control {
 
         ctx.save();
 
+        const prefixwidth = ctx.measureText(this.prefix).width;
+        if (this.prefix !== null && this.prefix.length > 0) {
+            ctx.fillStyle = '#e1e1e1';
+            ctx.fillText(this.label, x + m, y + (13 * scale));
+        }
+        const lpad = prefixwidth + m;
+        this.cLeft = x + m + lpad;
+
         ctx.fillStyle = '#222222';
         ctx.strokeStyle = '#3d3d3d';
         ctx.beginPath();
-        ctx.roundRect(x + m, y + (2 * scale), w - (2 * m), (GRID - 4) * scale, 4 * scale);
+        ctx.roundRect(x + m + lpad, y + (2 * scale), w - (2 * m) - lpad, (GRID - 4) * scale, 4 * scale);
         ctx.fill();
         ctx.stroke();
 
@@ -221,7 +241,7 @@ export class ControlDropdown extends Control {
         ctx.clip();
 
         ctx.fillStyle = '#e1e1e1';
-        ctx.fillText(this.label, x + m + (!connected ? m : 0), y + (14 * scale));
+        ctx.fillText(this.values[this.value], x + m + lpad + (!connected ? m : 0), y + (14 * scale));
         ctx.restore();
     }
 }
@@ -231,6 +251,11 @@ export class ControlCheckbox extends Control {
         super(1);
         this.label = label;
         this.value = value;
+    }
+
+    mouseDown(nsx, nsy, event) {
+        this.value = !this.value;
+        return true;
     }
 
     draw(ctx, x, y, w, scale, connected) {
@@ -393,6 +418,8 @@ class NodeEditor {
         this.linkFromOutput = false;
         this.valueNode = null;
         this.valueSock = null;
+        this.controlNode = null;
+        this.controlIdx = null;
 
         this.nodes = [];
         this.links = [];
@@ -484,6 +511,13 @@ class NodeEditor {
                     }
                 } else {
                     // Control
+                    if (selectedNode.controls[hitControl[1]].mouseDown(nsx, nsy, event)) {
+                        this.mode = M_CONTROL;
+                        this.controlNode = selectedNode;
+                        this.controlIdx = hitControl[1];
+                        this.repaint();
+                        return;
+                    }
                 }
             }
 
@@ -527,6 +561,10 @@ class NodeEditor {
                     break;
                 case M_VALUE:
                     this.valueNode.sockets[this.valueSock].mouseMove(nsx, nsy, event);
+                    this.repaint();
+                    break;
+                case M_CONTROL:
+                    this.controlNode.controls[this.controlIdx].mouseMove(nsx, nsy, event);
                     this.repaint();
                     break;
                 case M_MOVE:
@@ -577,6 +615,7 @@ class NodeEditor {
             const nsx = (event.offsetX - this.panx) / this.zoom;
             const nsy = (event.offsetY - this.pany) / this.zoom;
 
+            let release = true;
             switch (this.mode) {
                 case M_LINK:
                     const selectedNodeIdx = this.findNodeOnPosition(nsx, nsy);
@@ -600,9 +639,14 @@ class NodeEditor {
                 case M_VALUE:
                     this.valueNode.sockets[this.valueSock].mouseUp(nsx, nsy, event);
                     break;
+                case M_CONTROL:
+                    release = this.controlNode.controls[this.controlIdx].mouseUp(nsx, nsy, event);
+                    break;
             }
-            this.mode = M_NONE;
-            this.el.style.cursor = 'default';
+            if (release) {
+                this.mode = M_NONE;
+                this.el.style.cursor = 'default';
+            }
             this.repaint();
         });
     }

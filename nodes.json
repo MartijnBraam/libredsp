@@ -4,7 +4,7 @@
     "id": "i2s0:0",
     "name": "Analog 1",
     "single": true,
-    "width": 120,
+    "width": 160,
     "sockets": [
       {
         "type": "mono",
@@ -23,6 +23,7 @@
       {
         "type": "dropdown",
         "label": "Impedance",
+        "prefix": "Impedance",
         "values": {
           "0": "2.5k",
           "1": "5k",

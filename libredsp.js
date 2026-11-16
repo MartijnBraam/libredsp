@@ -81,10 +81,10 @@ class NodeTemplate {
             const cd = this.controls[i];
             switch (cd.type) {
                 case "dropdown":
-                    controls.push(new ControlDropdown(cd.label, cd.values))
+                    controls.push(new ControlDropdown(cd.label, cd.values, cd.prefix));
                     break;
                 case "checkbox":
-                    controls.push(new ControlCheckbox(cd.label, cd.checked))
+                    controls.push(new ControlCheckbox(cd.label, cd.checked));
                     break;
             }
         }
