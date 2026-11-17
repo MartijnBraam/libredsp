@@ -1,0 +1,153 @@
+[
+  {
+    "class": "input",
+    "id": "usb:in",
+    "gen": "AudioInputUSB",
+    "name": "USB Input",
+    "single": true,
+    "width": 160,
+    "sockets": [
+      {
+        "type": "stereo",
+        "dir": "out"
+      }
+    ],
+    "controls": [],
+    "map": {
+      "s0:left": 0,
+      "s0:right": 1
+    }
+  },
+  {
+    "class": "input",
+    "id": "variax",
+    "name": "Variax VDI",
+    "gen": "AsyncAudioInputSPDIF3",
+    "single": true,
+    "width": 160,
+    "sockets": [
+      {
+        "type": "mono",
+        "dir": "out"
+      }
+    ],
+    "controls": []
+  },
+  {
+    "class": "output",
+    "id": "usb:out",
+    "name": "USB Output",
+    "gen": "AudioOutputUSB",
+    "single": true,
+    "width": 160,
+    "sockets": [
+      {
+        "type": "stereo",
+        "dir": "in"
+      }
+    ],
+    "controls": [],
+    "map": {
+      "s0:left": 0,
+      "s0:right": 1
+    }
+  },
+  {
+    "class": "constant",
+    "id": "dbvalue",
+    "name": "dB Value",
+    "single": false,
+    "width": 100,
+    "sockets": [
+      {
+        "type": "db",
+        "dir": "out"
+      },
+      {
+        "type": "db",
+        "dir": "in",
+        "id": "gain",
+        "label": "Gain",
+        "min": 0,
+        "max": 42
+      }
+    ],
+    "controls": []
+  },
+  {
+    "class": "convert",
+    "id": "monostereo",
+    "name": "Mono to stereo",
+    "single": false,
+    "width": 100,
+    "sockets": [
+      {
+        "type": "stereo",
+        "dir": "out"
+      },
+      {
+        "type": "mono",
+        "dir": "in",
+        "id": "left",
+        "label": "Left"
+      },
+      {
+        "type": "mono",
+        "dir": "in",
+        "id": "right",
+        "label": "Right"
+      }
+    ],
+    "controls": []
+  },
+  {
+    "class": "convert",
+    "id": "stereomono",
+    "name": "Stereo to mono",
+    "single": false,
+    "width": 100,
+    "sockets": [
+      {
+        "type": "stereo",
+        "dir": "in"
+      },
+      {
+        "type": "mono",
+        "dir": "out",
+        "label": "left"
+      },
+      {
+        "type": "mono",
+        "dir": "out",
+        "label": "right"
+      }
+    ],
+    "controls": []
+  },
+  {
+    "class": "audio",
+    "id": "stereogate",
+    "name": "Stereo gate",
+    "single": false,
+    "width": 140,
+    "sockets": [
+      {
+        "type": "stereo",
+        "dir": "out"
+      },
+      {
+        "type": "stereo",
+        "dir": "in"
+      },
+      {
+        "type": "db",
+        "dir": "in",
+        "id": "threshold",
+        "label": "Threshold",
+        "min": -100,
+        "max": 0
+      }
+    ],
+    "controls": []
+  }
+]

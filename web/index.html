@@ -27,7 +27,7 @@
             grid-template-areas:
                 "header header"
                 "aside main";
-            grid-template-columns: minmax(100px, 1fr) minmax(100px, 3fr);
+            grid-template-columns: minmax(200px, 1fr) minmax(100px, 5fr);
             grid-template-rows: 24px 1fr;
         }
 
@@ -43,20 +43,30 @@
             background: #303030;
             color: white;
             min-height: 0;
+            padding: 10px;
+
+            h2 {
+                font-size: 14px;
+                border-bottom: 1px dotted #aaa;
+            }
         }
 
         main {
             grid-area: main;
             background: #1a1a1a;
         }
+
+        node-template {
+            display: block;
+        }
     </style>
 </head>
 <body>
 <header>
-    DATA!
+    <button id="upload">Upload</button>
 </header>
 <aside>
-    HA
+    <div id="node-templates"></div>
 </aside>
 <main>
     <canvas id="canvas"></canvas>
@@ -65,7 +75,11 @@
 <script type="module">
     import LibreDSP from './libredsp.js';
 
-    const dsp = new LibreDSP(document.getElementById('canvas'));
+    const dsp = new LibreDSP({
+        canvas: document.getElementById('canvas'),
+        templates: document.getElementById('node-templates'),
+        uploadButton: document.getElementById('upload'),
+    });
 </script>
 </body>
 </html>

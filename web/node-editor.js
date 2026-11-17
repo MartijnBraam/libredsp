@@ -424,8 +424,29 @@ class NodeEditor {
         this.nodes = [];
         this.links = [];
 
+        this.events = {
+            'node-add': [],
+            'node-remove': [],
+            'node-move': [],
+            'node-update': [],
+            'link-add': [],
+            'link-remove': [],
+        };
+
         this.recalculateCanvasSize();
         this.repaint();
+
+        window.addEventListener('keydown', (event) => {
+            if (event.key === "Delete") {
+                for (let i = this.nodes.length - 1; i >= 0; i--) {
+                    const node = this.nodes[i];
+                    if (node.selected) {
+                        this.DeleteNode(i);
+                    }
+                }
+                this.repaint();
+            }
+        });
 
         this.el.addEventListener('wheel', (event) => {
             event.preventDefault();
@@ -651,9 +672,47 @@ class NodeEditor {
         });
     }
 
+    addEventListener(event, handler) {
+        if (!(event in this.events)) {
+            console.error("Unknown event", event);
+        }
+        this.events[event].push(handler);
+        return this.events[event].length - 1;
+    }
+
+    raiseEvent(event, data) {
+        for (let i = 0; i < this.events[event].length; i++) {
+            this.events[event][i](data);
+        }
+    }
+
     AddNode(node) {
         this.nodes.push(node);
         this.repaint();
+        this.raiseEvent('node-add', node);
+    }
+
+    DeleteNode(index) {
+        this.raiseEvent('node-remove', this.nodes[index]);
+        let rlist = [];
+        for (let i = 0; i < this.links.length; i++) {
+            const link = this.links[i];
+            if (link.src_node === index || link.dst_node === index) {
+                rlist.push(i);
+            }
+
+            if (link.src_node > index) {
+                link.src_node--;
+            }
+            if (link.dst_node > index) {
+                link.dst_node--;
+            }
+        }
+        for (let i = rlist.length - 1; i >= 0; i--) {
+            this.raiseEvent('link-remove', this.links[i]);
+            this.links.splice(rlist[i], 1);
+        }
+        this.nodes.splice(index, 1);
     }
 
     recalculateCanvasSize() {
