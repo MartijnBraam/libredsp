@@ -85,6 +85,9 @@ void setup() {
                 case NodeAsyncAudioInputSPDIF3:
                     newNode = new AudioInputSPDIF3();
                     break;
+                case NodeAudioEffectFreeverb:
+                    newNode = new AudioEffectFreeverb();
+                    break;
                 }
                 dynNodes.push_back(newNode);
             }

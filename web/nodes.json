@@ -31,7 +31,10 @@
         "dir": "out"
       }
     ],
-    "controls": []
+    "controls": [],
+    "map": {
+      "s0:mono": 0
+    }
   },
   {
     "class": "output",
@@ -126,28 +129,41 @@
   },
   {
     "class": "audio",
-    "id": "stereogate",
-    "name": "Stereo gate",
+    "id": "freeverb",
+    "name": "Algorithmic reverb",
+    "gen": "AudioEffectFreeverb",
     "single": false,
     "width": 140,
     "sockets": [
       {
-        "type": "stereo",
+        "type": "mono",
         "dir": "out"
       },
       {
-        "type": "stereo",
+        "type": "mono",
         "dir": "in"
       },
       {
-        "type": "db",
+        "type": "float",
         "dir": "in",
-        "id": "threshold",
-        "label": "Threshold",
-        "min": -100,
-        "max": 0
+        "id": "size",
+        "label": "Size",
+        "min": 0,
+        "max": 1
+      },
+      {
+        "type": "float",
+        "dir": "in",
+        "id": "damp",
+        "label": "Damp",
+        "min": 0,
+        "max": 1
       }
     ],
-    "controls": []
+    "controls": [],
+    "map": {
+      "s0:mono": 0,
+      "s1:mono": 0
+    }
   }
 ]
