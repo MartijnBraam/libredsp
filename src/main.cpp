@@ -1,5 +1,8 @@
 #include <Arduino.h>
 #include <Audio.h>
+#include <list>
+#include <map>
+#include <set>
 #include <Wire.h>
 
 #include "i2cscan.h"
@@ -28,9 +31,10 @@ AudioControlTLV320AIC3104 codec(1, true, AICMODE_I2S, 44100, 24);
 #ifdef BOARD_REVC
 #endif
 
-static std::vector<AudioConnection*> dynLinks;
-static std::vector<AudioStream*> dynNodes;
-static std::vector<AudioAnalyzeRMS*> dynRms;
+static std::map<size_t, AudioConnection*> dynLinks;
+static std::map<size_t, AudioStream*> dynNodes;
+static std::map<size_t, AudioAnalyzeRMS*> dynRms;
+static std::set<AudioStream*> staticNodes;
 
 AudioInputUSB static_input_usb;
 AudioOutputUSB static_output_usb;
@@ -94,6 +98,40 @@ void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventTyp
     }
 }
 
+void cleanGraph() {
+    staticNodes.clear();
+    staticNodes.insert(&static_input_usb);
+    staticNodes.insert(&static_output_usb);
+#ifdef NodeAudioInputI2SQuad
+    staticNodes.insert(&static_input_i2s_quad);
+#endif
+#ifdef NodeAudioOutputI2SQuad
+    staticNodes.insert(&static_output_i2s_quad);
+#endif
+
+    for (size_t i = dynNodes.size(); i > 0; i--) {
+        bool isStatic = false;
+        for (auto& staticNode : staticNodes) {
+            if (dynNodes[i] == staticNode) {
+                isStatic = true;
+                break;
+            }
+        }
+        if (!isStatic) {
+            Serial.printf("Deleting node %d\n", i);
+            delete dynNodes[i];
+        }
+        else {
+            Serial.printf("Node %d is static\n", i);
+        }
+    }
+    dynNodes.clear();
+    for (auto& link : dynLinks) {
+        link.second->disconnect();
+    }
+    dynLinks.clear();
+}
+
 void setup() {
     Serial.begin(115200);
     AudioMemory(64);
@@ -143,9 +181,8 @@ void setup() {
             auto json = raw.as<JsonObject>();
             JsonObject nodes = json["nodes"];
 
-            dynLinks.clear();
-            dynNodes.clear();
-
+            cleanGraph();
+            size_t index = 0;
             for (JsonPair nodepair : nodes) {
                 JsonObject node = nodepair.value();
                 JsonObject ctrl = node["ctrl"];
@@ -196,9 +233,10 @@ void setup() {
 #endif
                 }
                 Serial.println("Adding node");
-                dynNodes.push_back(newNode);
+                dynNodes[index++] = newNode;
             }
             JsonArray links = json["links"];
+            index = 0;
             for (JsonArray link : links) {
                 int snode = link[0];
                 int dnode = link[2];
@@ -208,7 +246,7 @@ void setup() {
                 int dpad = link[3];
                 Serial.printf("link %d:%d -> %d:%d\n", snode, spad, dnode, dpad);
                 auto l = new AudioConnection(*src, spad, *dst, dpad);
-                dynLinks.push_back(l);
+                dynLinks[index++] = l;
             }
             request->send(200, "application/json", "[]");
         });
