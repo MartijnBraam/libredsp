@@ -21,6 +21,7 @@ class NodeTemplate {
         this.gen = data['gen'];
         this.genIdx = index;
         this.map = data['map'];
+        this.combine = data['combine'];
 
         this.instances = 0;
         this.single = data['single'];
@@ -121,6 +122,7 @@ export default class LibreDSP {
         });
 
         this.nodeTemplates = {};
+        this.combineMap = {};
 
         settings.canvas.addEventListener("dragover", (event) => {
             event.preventDefault();
@@ -155,6 +157,9 @@ export default class LibreDSP {
                 const template = new NodeTemplate(data[i], i);
                 const gname = data[i]['class'];
                 this.nodeTemplates[data[i].id] = template;
+                if (template.combine !== null && !(template.combine in this.combineMap)) {
+                    this.combineMap[template.combine] = i;
+                }
                 if (!(gname in group)) {
                     group[gname] = [];
                 }
@@ -308,7 +313,6 @@ export default class LibreDSP {
         }
 
         // Optimize away the stereo-mono converter blocks
-        let patchCords2 = [];
         for (let i = 0; i < this.editor.nodes.length; i++) {
             const node = this.editor.nodes[i];
             if (node.id !== "monostereo" && node.id !== "stereomono") continue;
@@ -346,16 +350,55 @@ export default class LibreDSP {
 
         // Build audio nodelist
         let code = 0;
+        let combine = {};
         for (let i = 0; i < this.editor.nodes.length; i++) {
             const node = this.editor.nodes[i];
             if (node.id === "monostereo" || node.id === "stereomono") continue;
             const tpl = this.nodeTemplates[node.id];
             if (tpl.gen === null) continue;
-            result.nodes[i] = {'class': tpl.genIdx, 'id': code, 'tpl': tpl.id};
+            let combineDst = null;
+            if (tpl.combine !== null) {
+                if (tpl.combine in combine) {
+                    combineDst = combine[tpl.combine];
+                } else {
+                    combine[tpl.combine] = i;
+                }
+            }
+
+            const ctrl = {};
+            for (let si = 0; si < node.sockets.length; si++) {
+                const so = node.sockets[si];
+                if (!so.isInput) continue;
+                if (so.isConnected) continue;
+                if (so.type === CONN_MONO || so.type === CONN_STEREO) continue;
+                ctrl[so.label.toLowerCase()] = so.value;
+            }
+            if (combineDst !== null) {
+                result.nodes[combineDst]['ctrl'] += ctrl;
+                for (let p = 0; p < patchCords.length; p++) {
+                    const patch = patchCords[p];
+                    if (patch.src_node === i) {
+                        patch.src_node = combineDst;
+                        patch.src_tpl = tpl;
+                    }
+                    if (patch.dst_node === i) {
+                        patch.dst_node = combineDst;
+                        patch.dst_tpl = tpl;
+                    }
+                }
+            } else {
+                result.nodes[i] = {
+                    'class': tpl.combine ? this.combineMap[tpl.combine] : tpl.genIdx, // Int mapping to nodemap.h
+                    'id': code, // unique index for links and controls
+                    'tpl': tpl.id, // reference to the template for metadata
+                    'ctrl': ctrl, // control state
+                };
+            }
+
             code++;
         }
 
-        // Build final patches
+        // Build final links
         for (let i = 0; i < patchCords.length; i++) {
             const patch = patchCords[i];
             if (!(patch.src_node in result.nodes)) continue;
@@ -363,9 +406,11 @@ export default class LibreDSP {
 
             const src = result.nodes[patch.src_node];
             const dst = result.nodes[patch.dst_node];
+            let srct = "src_tpl" in patch ? patch.src_tpl.id : src.tpl;
+            let dstt = "dst_tpl" in patch ? patch.dst_tpl.id : dst.tpl;
             result.links.push([
-                src.id, this.nodeTemplates[src.tpl].map[patch.src_sock],
-                dst.id, this.nodeTemplates[src.tpl].map[patch.dst_sock],
+                src.id, this.nodeTemplates[srct].map[patch.src_sock],
+                dst.id, this.nodeTemplates[dstt].map[patch.dst_sock],
             ]);
         }
         console.log("Compiled graph", result);
@@ -386,7 +431,15 @@ export default class LibreDSP {
         let res = '';
         for (let i = 0; i < patchCords.length; i++) {
             const p = patchCords[i];
-            res += p.src_node + ':' + p.src_sock + ' -> ' + p.dst_node + ':' + p.dst_sock + '\n';
+            let srcn = p.src_node;
+            let dstn = p.dst_node;
+            if ("src_tpl" in p) {
+                srcn += "[" + p.src_tpl.id + "]";
+            }
+            if ("dst_tpl" in p) {
+                dstn += "[" + p.dst_tpl.id + "]";
+            }
+            res += srcn + ':' + p.src_sock + ' -> ' + dstn + ':' + p.dst_sock + '\n';
         }
         console.debug(res);
     }

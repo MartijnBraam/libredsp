@@ -19,24 +19,6 @@
     }
   },
   {
-    "class": "input",
-    "id": "variax",
-    "name": "Variax VDI",
-    "gen": "AsyncAudioInputSPDIF3",
-    "single": true,
-    "width": 160,
-    "sockets": [
-      {
-        "type": "mono",
-        "dir": "out"
-      }
-    ],
-    "controls": [],
-    "map": {
-      "s0:mono": 0
-    }
-  },
-  {
     "class": "output",
     "id": "usb:out",
     "name": "USB Output",

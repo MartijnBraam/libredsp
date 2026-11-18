@@ -1,0 +1,136 @@
+[
+  {
+    "class": "input",
+    "id": "i2squad:in:0",
+    "combine": "i2squad:in",
+    "gen": "AudioInputI2SQuad",
+    "name": "XLR Input 1",
+    "single": true,
+    "width": 160,
+    "sockets": [
+      {
+        "type": "mono",
+        "dir": "out"
+      }
+    ],
+    "controls": [],
+    "map": {
+      "s0:mono": 0
+    }
+  },
+  {
+    "class": "input",
+    "id": "i2squad:in:1",
+    "combine": "i2squad:in",
+    "gen": "AudioInputI2SQuad",
+    "name": "XLR Input 2",
+    "single": true,
+    "width": 160,
+    "sockets": [
+      {
+        "type": "mono",
+        "dir": "out"
+      }
+    ],
+    "controls": [],
+    "map": {
+      "s0:mono": 1
+    }
+  },
+  {
+    "class": "input",
+    "id": "i2squad:in:2",
+    "combine": "i2squad:in",
+    "gen": "AudioInputI2SQuad",
+    "name": "XLR Input 3",
+    "single": true,
+    "width": 160,
+    "sockets": [
+      {
+        "type": "mono",
+        "dir": "out"
+      }
+    ],
+    "controls": [],
+    "map": {
+      "s0:mono": 2
+    }
+  },
+  {
+    "class": "input",
+    "id": "i2squad:in:3",
+    "combine": "i2squad:in",
+    "gen": "AudioInputI2SQuad",
+    "name": "PC Input",
+    "single": true,
+    "width": 160,
+    "sockets": [
+      {
+        "type": "mono",
+        "dir": "out"
+      }
+    ],
+    "controls": [],
+    "map": {
+      "s0:mono": 3
+    }
+  },
+  {
+    "class": "output",
+    "id": "i2squad:out:0",
+    "combine": "i2squad:out",
+    "gen": "AudioOutputI2SQuad",
+    "name": "XLR Out 1",
+    "single": true,
+    "width": 160,
+    "sockets": [
+      {
+        "type": "mono",
+        "dir": "in"
+      }
+    ],
+    "controls": [],
+    "map": {
+      "s0:mono": 1
+    }
+  },
+  {
+    "class": "output",
+    "id": "i2squad:out:1",
+    "combine": "i2squad:out",
+    "gen": "AudioOutputI2SQuad",
+    "name": "XLR Out 2",
+    "single": true,
+    "width": 160,
+    "sockets": [
+      {
+        "type": "mono",
+        "dir": "in"
+      }
+    ],
+    "controls": [],
+    "map": {
+      "s0:mono": 0
+    }
+  },
+  {
+    "class": "output",
+    "id": "i2squad:out:2",
+    "combine": "i2squad:out",
+    "gen": "AudioOutputI2SQuad",
+    "name": "Headphone out",
+    "single": true,
+    "width": 160,
+    "sockets": [
+      {
+        "type": "stereo",
+        "dir": "in"
+      }
+    ],
+    "controls": [],
+    "map": {
+      "s0:left": 2,
+      "s0:right": 3
+    }
+  }
+]

@@ -1,5 +1,15 @@
 #include <Arduino.h>
 #include <Audio.h>
+#include <Wire.h>
+
+#include "i2cscan.h"
+#include "board/board_fosdem_revc.h"
+
+#ifdef BOARD_VARIAX
+#include "control_tlv320aic3104.h"
+#elifdef BOARD_REVC
+#include "board/board_fosdem_revc.h"
+#endif
 
 #include <QNEthernet.h>
 
@@ -12,8 +22,25 @@ using namespace qindesign::network;
 
 AsyncWebServer server(80);
 
+#ifdef BOARD_VARIAX
+AudioControlTLV320AIC3104 codec(1, true, AICMODE_I2S, 44100, 24);
+#endif
+#ifdef BOARD_REVC
+#endif
+
 static std::vector<AudioConnection*> dynLinks;
 static std::vector<AudioStream*> dynNodes;
+static std::vector<AudioAnalyzeRMS*> dynRms;
+
+AudioInputUSB static_input_usb;
+AudioOutputUSB static_output_usb;
+
+#ifdef NodeAudioInputI2SQuad
+AudioInputI2SQuad static_input_i2s_quad;
+#endif
+#ifdef NodeAudioOutputI2SQuad
+AudioOutputI2SQuad static_output_i2s_quad;
+#endif
 
 void handleNotFound(AsyncWebServerRequest* request) {
     String message = "Not Found\n\n";
@@ -34,12 +61,52 @@ void handleNotFound(AsyncWebServerRequest* request) {
     request->send(404, "text/plain", message);
 }
 
+#ifdef BOARD_VARIAX
+void setupVariaxBoard() {
+    Wire.begin();
+    Wire.setSCL(19);
+    Wire.setSDA(18);
+
+    codec.setVerbose(2);
+    codec.begin(6);
+    codec.setPll(11289600, 1, 1, 7, 0);
+    codec.inputMode(AIC_DIFF);
+    codec.DACpower(DAC_100);
+    codec.enable(CH_BOTH);
+    codec.enableLineOut(true);
+    codec.volume(1.0);
+}
+#endif
+
+void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data,
+               size_t length) {
+    if (type == WS_EVT_CONNECT) {
+        Serial.println("WS connect");
+        client->ping();
+    }
+    else if (type == WS_EVT_DISCONNECT) {
+        Serial.println("WS disconnect");
+    }
+    else if (type == WS_EVT_ERROR) {
+        Serial.printf("WS error: %s\n", (char*)data);
+    }
+    else if (type == WS_EVT_DATA) {
+    }
+}
+
 void setup() {
     Serial.begin(115200);
-    AudioMemory(10);
+    AudioMemory(64);
+
+    delay(1000);
+    scanI2C(0, Wire);
+    scanI2C(1, Wire1);
+    scanI2C(2, Wire2);
 
     Ethernet.setHostname("libredsp");
     Ethernet.begin();
+
+    setupBoard();
 
     server.onNotFound(handleNotFound);
 
@@ -67,36 +134,79 @@ void setup() {
         request->send(response);
     });
 
+    auto wshandler = new AsyncWebSocket("/ws");
+    wshandler->onEvent(onWsEvent);
+    server.addHandler(wshandler);
+
     auto handler = new AsyncCallbackJsonWebHandler(
         "/graph", [](AsyncWebServerRequest* request, JsonVariant& raw) {
             auto json = raw.as<JsonObject>();
             JsonObject nodes = json["nodes"];
+
+            dynLinks.clear();
+            dynNodes.clear();
+
             for (JsonPair nodepair : nodes) {
                 JsonObject node = nodepair.value();
+                JsonObject ctrl = node["ctrl"];
                 int classIdx = node["class"].as<int>();
                 AudioStream* newNode;
+                AudioAnalyzeRMS* newRms;
                 switch (classIdx) {
                 case NodeAudioInputUSB:
-                    newNode = new AudioInputUSB();
+                    newNode = &static_input_usb;
                     break;
                 case NodeAudioOutputUSB:
-                    newNode = new AudioOutputUSB();
+                    newNode = &static_output_usb;
                     break;
+#ifdef NodeAsyncAudioInputSPDIF3
                 case NodeAsyncAudioInputSPDIF3:
                     newNode = new AudioInputSPDIF3();
                     break;
+#endif
                 case NodeAudioEffectFreeverb:
-                    newNode = new AudioEffectFreeverb();
+                    {
+                        auto inst = new AudioEffectFreeverb();
+                        inst->damping(ctrl["damp"]);
+                        inst->roomsize(ctrl["size"]);
+                        newNode = inst;
+                    }
                     break;
+#ifdef NodeAudioOutputI2S2
+                case NodeAudioOutputI2S2:
+                    newNode = new AudioOutputI2S2();
+                    break;
+#endif
+#ifdef NodeAudioInputI2S2
+                case NodeAudioInputI2S2:
+                    newNode = new AudioInputI2S2();
+                    break;
+#endif
+#ifdef NodeAudioInputI2SQuad
+                case NodeAudioInputI2SQuad:
+                    Serial.println("AudioInputI2SQuad");
+                    newNode = &static_input_i2s_quad;
+                    break;
+#endif
+#ifdef NodeAudioOutputI2SQuad
+                case NodeAudioOutputI2SQuad:
+                    Serial.println("AudioOutputI2SQuad");
+                    newNode = &static_output_i2s_quad;
+                    break;
+#endif
                 }
+                Serial.println("Adding node");
                 dynNodes.push_back(newNode);
             }
             JsonArray links = json["links"];
             for (JsonArray link : links) {
-                auto src = dynNodes[link[0]];
-                auto dst = dynNodes[link[2]];
+                int snode = link[0];
+                int dnode = link[2];
+                auto src = dynNodes[snode];
+                auto dst = dynNodes[dnode];
                 int spad = link[1];
                 int dpad = link[3];
+                Serial.printf("link %d:%d -> %d:%d\n", snode, spad, dnode, dpad);
                 auto l = new AudioConnection(*src, spad, *dst, dpad);
                 dynLinks.push_back(l);
             }

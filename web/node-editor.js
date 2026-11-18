@@ -80,6 +80,7 @@ export class Socket extends Control {
     constructor(height, input, type) {
         super(height);
         this.isInput = input;
+        this.isConnected = false;
         this.type = type;
     }
 }
@@ -155,6 +156,7 @@ export class SocketInput extends Socket {
         const m = 10.0 * scale;
         this.w = w;
         this.s = scale;
+        this.isConnected = connected;
         if (connected || !this.editable) {
             ctx.fillStyle = '#e1e1e1';
             ctx.fillText(this.label, x + m + (!connected ? m : 0), y + (14 * scale));
