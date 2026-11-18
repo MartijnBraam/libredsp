@@ -10,6 +10,11 @@
       {
         "type": "stereo",
         "dir": "out"
+      },
+      {
+        "type": "float",
+        "dir": "out",
+        "label": "volume"
       }
     ],
     "controls": [],
@@ -105,6 +110,62 @@
         "type": "mono",
         "dir": "out",
         "label": "right"
+      }
+    ],
+    "controls": []
+  },
+  {
+    "class": "math",
+    "id": "maprange",
+    "name": "Map range",
+    "single": false,
+    "width": 160,
+    "sockets": [
+      {
+        "type": "float",
+        "label": "Value",
+        "dir": "out",
+        "ref": "result"
+      },
+      {
+        "type": "float",
+        "dir": "in",
+        "label": "Value",
+        "ref": "value",
+        "min": 0,
+        "max": 1
+      },
+      {
+        "type": "float",
+        "dir": "in",
+        "label": "From Min",
+        "ref": "in_min",
+        "min": 0,
+        "max": 1
+      },
+      {
+        "type": "float",
+        "dir": "in",
+        "label": "From Max",
+        "ref": "in_max",
+        "min": 0,
+        "max": 1
+      },
+      {
+        "type": "float",
+        "dir": "in",
+        "label": "To Min",
+        "ref": "out_min",
+        "min": 0,
+        "max": 1
+      },
+      {
+        "type": "float",
+        "dir": "in",
+        "label": "To Max",
+        "ref": "out_max",
+        "min": 0,
+        "max": 1
       }
     ],
     "controls": []

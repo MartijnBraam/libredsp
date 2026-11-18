@@ -10,6 +10,7 @@ const CLASS_OUTPUT = '#3c1d26';
 const CLASS_AUDIO = '#6e6e1d';
 const CLASS_CONSTANT = CLASS_INPUT;
 const CLASS_CONVERT = '#246283';
+const CLASS_MATH = '#3c3c83';
 const CLASS_GROUP = '#344621';
 const CLASS_GROUPIO = '#1d1d1d';
 
@@ -58,6 +59,9 @@ class NodeTemplate {
                 break;
             case "convert":
                 this.type = CLASS_CONVERT;
+                break;
+            case "math":
+                this.type = CLASS_MATH;
                 break;
             case "audio":
                 this.type = CLASS_AUDIO;
