@@ -768,8 +768,8 @@ class NodeEditor {
         return res;
     }
 
-    findNodeOnPosition(nsx, nsy) {
-        const m = (5 * this.zoom);
+    findNodeOnPosition(nsx, nsy, margin = 0) {
+        const m = (5 * this.zoom) + (margin * this.zoom);
         for (let i = 0; i < this.nodes.length; i++) {
             const node = this.nodes[i];
             if (node.x - m < nsx && (node.x + node.width + m) > nsx) {
@@ -781,8 +781,8 @@ class NodeEditor {
         return null;
     }
 
-    findSocketOnPosition(node, nsx, nsy) {
-        const sor = 4;
+    findSocketOnPosition(node, nsx, nsy, margin = 0) {
+        const sor = 4 + margin;
         for (let i = 0; i < node.sockets.length; i++) {
             const so = node.sockets[i];
             const sox = so.isInput ? node.x : (node.x + node.width);
@@ -1030,28 +1030,32 @@ class NodeEditor {
         }
         if (this.mode === M_LINK) {
             const other = this.nodes[this.linkNode];
-            let offset = 30 * this.zoom;
-            let idx = 0;
-            let type = '#fff';
             let ox = this.linkFromOutput ? (other.x + other.width) : other.x;
-            ox = ox * this.zoom + this.panx;
-            for (let i = 0; i < other.sockets.length; i++) {
-                const so = other.sockets[i];
-                if (so.isInput === this.linkFromOutput) {
-                    continue;
+            ox *= this.zoom;
+            ox += this.panx;
+            const socket = other.sockets[this.linkSock];
+            let type = socket.type;
+            const oy = (other.y * this.zoom) + ((socket.row + 0.5) * GRID * this.zoom) + this.pany;
+
+            let mx = this.movex;
+            let my = this.movey;
+            const hitNode = this.findNodeOnPosition(this.movex, this.movey, 5);
+            if (hitNode !== null) {
+                const tn = this.nodes[hitNode];
+                const hitSocket = this.findSocketOnPosition(tn, this.movex, this.movey, 4);
+                if (hitSocket !== null) {
+                    const ts = tn.sockets[hitSocket];
+                    if (ts.isInput === this.linkFromOutput && ts.type === type) {
+                        mx = (this.linkFromOutput ? tn.x : (tn.x + tn.width)) * this.zoom + this.panx;
+                        my = (tn.y * this.zoom) + ((ts.row + 0.5) * GRID * this.zoom) + this.pany;
+                    }
                 }
-                if (idx === this.linkSock) {
-                    offset = so.row * GRID + (GRID / 2);
-                    type = so.type;
-                    break;
-                }
-                idx++;
             }
-            const oy = other.y * this.zoom + offset * this.zoom + this.pany;
-            let src_x = this.linkFromOutput ? ox : this.movex;
-            let src_y = this.linkFromOutput ? oy : this.movey;
-            let dst_x = this.linkFromOutput ? this.movex : ox;
-            let dst_y = this.linkFromOutput ? this.movey : oy;
+
+            let src_x = this.linkFromOutput ? ox : mx;
+            let src_y = this.linkFromOutput ? oy : my;
+            let dst_x = this.linkFromOutput ? mx : ox;
+            let dst_y = this.linkFromOutput ? my : oy;
             this.drawNoodle(src_x, src_y, dst_x, dst_y, type);
         }
         this.ctx.restore();
