@@ -330,7 +330,7 @@ export default class LibreDSP {
             for (let o = 0; o < node.padOut.length; o++) {
                 for (let p = 0; p < patchCords.length; p++) {
                     const patch = patchCords[p];
-                    if (patch.src_node === i && patch.src_sock === node.padOut[o]) {
+                    if (patch.src_node === i && patch.src_sock === node.padOut[o] && o in spad) {
                         patchCords.push(new Link(spad[o][0], spad[o][1], patch.dst_node, patch.dst_sock));
                     }
                 }
@@ -355,9 +355,9 @@ export default class LibreDSP {
             const node = this.editor.nodes[i];
             if (node.id === "monostereo" || node.id === "stereomono") continue;
             const tpl = this.nodeTemplates[node.id];
-            if (tpl.gen === null) continue;
+            if (tpl.gen === undefined) continue;
             let combineDst = null;
-            if (tpl.combine !== null) {
+            if (tpl.combine !== undefined && tpl.combine !== null) {
                 if (tpl.combine in combine) {
                     combineDst = combine[tpl.combine];
                 } else {
