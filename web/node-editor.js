@@ -102,8 +102,9 @@ export class SocketOutput extends Socket {
 }
 
 export class SocketInput extends Socket {
-    constructor(label, type, value, min, max, editable) {
+    constructor(ref, label, type, value, min, max, editable) {
         super(1, true, type);
+        this.ref = ref;
         this.label = label;
         this.value = value;
         this.min = min;

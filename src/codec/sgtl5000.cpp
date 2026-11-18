@@ -644,6 +644,13 @@ unsigned int LibreDspControlSGTL5000::modify(unsigned int reg, unsigned int val,
     return val1;
 }
 
+bool LibreDspControlSGTL5000::volume(float n) {
+    int steps = (-1*n+12) * 2;
+    int val = 0x7F - steps;
+    Serial.printf("hp volume 0x%02X\n", val);
+    return volumeInteger(val);
+}
+
 bool LibreDspControlSGTL5000::volumeInteger(unsigned int n) {
     if (n == 0) {
         muted = true;

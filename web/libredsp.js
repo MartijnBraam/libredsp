@@ -71,13 +71,17 @@ class NodeTemplate {
                     break;
             }
             let label = sd.type;
+            let ref = sd.type;
             if ("label" in sd) {
                 label = sd.label;
+            }
+            if ("ref" in sd) {
+                ref = sd.ref;
             }
             if (sd.dir === "out") {
                 sockets.push(new SocketOutput(label, stype));
             } else {
-                const so = new SocketInput(label, stype, 0, sd.min, sd.max, true);
+                const so = new SocketInput(ref, label, stype, 0, sd.min, sd.max, true);
                 switch (stype) {
                     case CONN_DB:
                         so.formatter = (value) => {
@@ -371,7 +375,7 @@ export default class LibreDSP {
                 if (!so.isInput) continue;
                 if (so.isConnected) continue;
                 if (so.type === CONN_MONO || so.type === CONN_STEREO) continue;
-                ctrl[so.label.toLowerCase()] = so.value;
+                ctrl[so.ref] = so.value;
             }
             if (combineDst !== null) {
                 result.nodes[combineDst]['ctrl'] += ctrl;

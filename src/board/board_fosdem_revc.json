@@ -125,6 +125,14 @@
       {
         "type": "stereo",
         "dir": "in"
+      },
+      {
+        "type": "db",
+        "dir": "in",
+        "label": "Volume",
+        "ref": "hpgain",
+        "min": -52,
+        "max": 12
       }
     ],
     "controls": [],

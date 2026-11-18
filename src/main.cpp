@@ -189,6 +189,7 @@ void setup() {
                 int classIdx = node["class"].as<int>();
                 AudioStream* newNode;
                 AudioAnalyzeRMS* newRms;
+                bool ctrlHardware = false;
                 switch (classIdx) {
                 case NodeAudioInputUSB:
                     newNode = &static_input_usb;
@@ -223,17 +224,24 @@ void setup() {
                 case NodeAudioInputI2SQuad:
                     Serial.println("AudioInputI2SQuad");
                     newNode = &static_input_i2s_quad;
+                    ctrlHardware = true;
                     break;
 #endif
 #ifdef NodeAudioOutputI2SQuad
                 case NodeAudioOutputI2SQuad:
                     Serial.println("AudioOutputI2SQuad");
                     newNode = &static_output_i2s_quad;
+                    ctrlHardware = true;
                     break;
 #endif
                 }
                 Serial.println("Adding node");
                 dynNodes[index++] = newNode;
+                if (ctrlHardware) {
+                    for (JsonPair ctrlpair : ctrl) {
+                        controlBoard(classIdx, ctrlpair.key(), ctrlpair.value());
+                    }
+                }
             }
             JsonArray links = json["links"];
             index = 0;

@@ -1,5 +1,8 @@
 #pragma once
 
+#include "nodemap.h"
+#include "ArduinoJson/Strings/JsonString.hpp"
+#include "ArduinoJson/Variant/JsonVariant.hpp"
 #include "codec/sgtl5000.h"
 
 inline LibreDspControlSGTL5000 sgtl5000_1;
@@ -22,4 +25,15 @@ inline void setupBoard() {
     sgtl5000_2.lineOutLevel(13);
     sgtl5000_2.lineInLevel(0, 0);
     sgtl5000_2.adcHighPassFilterDisable();
+}
+
+inline void controlBoard(int type, ArduinoJson::JsonString key, ArduinoJson::JsonVariant val) {
+    switch (type) {
+    case NodeAudioOutputI2SQuad:
+        if (strcmp(key.c_str(), "hpgain") == 0) {
+            float gain = val;
+            sgtl5000_2.volume(gain);
+        }
+        break;
+    }
 }
