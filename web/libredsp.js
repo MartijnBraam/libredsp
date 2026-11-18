@@ -13,6 +13,24 @@ const CLASS_CONVERT = '#246283';
 const CLASS_GROUP = '#344621';
 const CLASS_GROUPIO = '#1d1d1d';
 
+let lastFetch = 0;
+
+function debounceFetch(url, data) {
+    const now = new Date().getTime();
+    if (now - lastFetch >= 300) {
+        fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        }).then((resp) => {
+            console.log(resp)
+        });
+        lastFetch = now;
+    }
+}
+
 class NodeTemplate {
     constructor(data, index) {
         this.id = data['id'];
@@ -151,6 +169,8 @@ export default class LibreDSP {
         this.editor.addEventListener('node-remove', (event) => {
             this.nodeTemplates[event.id].instances--;
         });
+
+        this.ws = new WebSocket('/ws');
     }
 
     loadNodes() {
@@ -375,6 +395,26 @@ export default class LibreDSP {
                 if (!so.isInput) continue;
                 if (so.isConnected) continue;
                 if (so.type === CONN_MONO || so.type === CONN_STEREO) continue;
+
+                so.clearEventListener('change');
+                so.addEventListener('change', (event) => {
+                    // TODO: figure out why websockets are broken in the teensy lib
+                    /*
+                    this.ws.send(JSON.stringify({
+                        'n': i,
+                        'r': so.ref,
+                        'v': event
+                    }));
+                     */
+                    const update = {
+                        'n': i,
+                        'r': so.ref,
+                        'v': event.value,
+                    };
+                    console.debug(update);
+                    debounceFetch('/control', update);
+                });
+
                 ctrl[so.ref] = so.value;
             }
             if (combineDst !== null) {

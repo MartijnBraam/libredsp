@@ -1,1 +1,52 @@
-{"nodes":[{"type":"usb:out","x":600,"y":180,"width":160,"state":{}},{"type":"monostereo","x":460,"y":180,"width":100,"state":{}},{"type":"i2s2:in:0","x":180,"y":160,"width":160,"state":{}},{"type":"i2s2:in:1","x":180,"y":240,"width":160,"state":{}}],"links":[[1,0,0,0],[3,0,1,2],[2,0,1,1]]}
+{
+  "nodes": [
+    {
+      "type": "usb:out",
+      "x": 677,
+      "y": 242,
+      "width": 160,
+      "state": {}
+    },
+    {
+      "type": "usb:in",
+      "x": 121,
+      "y": 176,
+      "width": 160,
+      "state": {}
+    },
+    {
+      "type": "monostereo",
+      "x": 521,
+      "y": 153,
+      "width": 100,
+      "state": {}
+    },
+    {
+      "type": "stereomono",
+      "x": 364,
+      "y": 205,
+      "width": 100,
+      "state": {}
+    }
+  ],
+  "links": [
+    [
+      1,
+      0,
+      3,
+      0
+    ],
+    [
+      3,
+      1,
+      2,
+      1
+    ],
+    [
+      2,
+      0,
+      0,
+      0
+    ]
+  ]
+}

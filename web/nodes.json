@@ -62,7 +62,7 @@
   {
     "class": "convert",
     "id": "monostereo",
-    "name": "Mono to stereo",
+    "name": "Stereo combine",
     "single": false,
     "width": 100,
     "sockets": [
@@ -88,7 +88,7 @@
   {
     "class": "convert",
     "id": "stereomono",
-    "name": "Stereo to mono",
+    "name": "Stereo split",
     "single": false,
     "width": 100,
     "sockets": [
@@ -128,7 +128,7 @@
       {
         "type": "float",
         "dir": "in",
-        "id": "size",
+        "ref": "size",
         "label": "Size",
         "min": 0,
         "max": 1
@@ -136,7 +136,7 @@
       {
         "type": "float",
         "dir": "in",
-        "id": "damp",
+        "ref": "damp",
         "label": "Damp",
         "min": 0,
         "max": 1
@@ -145,6 +145,46 @@
     "controls": [],
     "map": {
       "s0:mono": 0,
+      "s1:mono": 0
+    }
+  },
+  {
+    "class": "audio",
+    "id": "freeverbs",
+    "name": "Algorithmic stereo reverb",
+    "gen": "AudioEffectFreeverbs",
+    "single": false,
+    "width": 140,
+    "sockets": [
+      {
+        "type": "stereo",
+        "dir": "out"
+      },
+      {
+        "type": "mono",
+        "dir": "in"
+      },
+      {
+        "type": "float",
+        "dir": "in",
+        "ref": "size",
+        "label": "Size",
+        "min": 0,
+        "max": 1
+      },
+      {
+        "type": "float",
+        "dir": "in",
+        "ref": "damp",
+        "label": "Damp",
+        "min": 0,
+        "max": 1
+      }
+    ],
+    "controls": [],
+    "map": {
+      "s0:left": 0,
+      "s0:right": 1,
       "s1:mono": 0
     }
   }

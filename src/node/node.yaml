@@ -1,0 +1,24 @@
+- class: AudioOutputUSB
+  source: usb_audio
+  static: yes
+- class: AudioInputUSB
+  source: usb_audio
+  static: yes
+- class: AudioOutputI2SQuad
+  source: output_i2s_quad
+  static: yes
+- class: AudioInputI2SQuad
+  source: input_i2s_quad
+  static: yes
+- class: AudioEffectFreeverb
+  source: effect_freeverb
+  static: no
+  controls:
+    size: roomsize
+    damp: damping
+- class: AudioEffectFreeverbStereo
+  source: effect_freeverb
+  static: no
+  controls:
+    size: roomsize
+    damp: damping

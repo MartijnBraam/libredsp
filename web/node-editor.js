@@ -117,6 +117,25 @@ export class SocketInput extends Socket {
 
         this.w = 1;
         this.s = 1;
+
+        this.events = {
+            'change': []
+        }
+    }
+
+    addEventListener(name, callback) {
+        this.events[name].push(callback);
+    }
+
+    clearEventListener(name) {
+        this.events[name] = [];
+    }
+
+    raise(event, data) {
+        for (let i = 0; i < this.events[event].length; i++) {
+            const callback = this.events[event][i];
+            callback.call(this, data);
+        }
     }
 
     formatter(value) {
@@ -144,6 +163,7 @@ export class SocketInput extends Socket {
         if (this.value < this.min) {
             this.value = this.min;
         }
+        this.raise('change', {'value': this.value});
     }
 
     mouseUp(nsx, nsy, event) {

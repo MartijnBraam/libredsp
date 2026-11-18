@@ -28,12 +28,8 @@ inline void setupBoard() {
 }
 
 inline void controlBoard(int type, ArduinoJson::JsonString key, ArduinoJson::JsonVariant val) {
-    switch (type) {
-    case NodeAudioOutputI2SQuad:
-        if (strcmp(key.c_str(), "hpgain") == 0) {
-            float gain = val;
-            sgtl5000_2.volume(gain);
-        }
-        break;
+    if (strcmp(key.c_str(), "hpgain") == 0) {
+        float gain = val;
+        sgtl5000_2.volume(gain);
     }
 }
