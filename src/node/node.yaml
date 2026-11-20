@@ -22,3 +22,6 @@
   controls:
     size: roomsize
     damp: damping
+- class: AudioAnalyzeLUFS
+  source: stream/analyze_lufs
+  static: no

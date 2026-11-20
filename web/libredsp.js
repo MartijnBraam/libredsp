@@ -11,6 +11,7 @@ const CLASS_AUDIO = '#6e6e1d';
 const CLASS_CONSTANT = CLASS_INPUT;
 const CLASS_CONVERT = '#246283';
 const CLASS_MATH = '#3c3c83';
+const CLASS_ANALYZE = CLASS_MATH;
 const CLASS_GROUP = '#344621';
 const CLASS_GROUPIO = '#1d1d1d';
 
@@ -62,6 +63,9 @@ class NodeTemplate {
                 break;
             case "math":
                 this.type = CLASS_MATH;
+                break;
+            case "analyze":
+                this.type = CLASS_ANALYZE;
                 break;
             case "audio":
                 this.type = CLASS_AUDIO;

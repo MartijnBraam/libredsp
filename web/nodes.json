@@ -248,5 +248,31 @@
       "s0:right": 1,
       "s1:mono": 0
     }
+  },
+  {
+    "class": "analyze",
+    "id": "lufs",
+    "name": "Analyze LUFS",
+    "single": false,
+    "width": 100,
+    "sockets": [
+      {
+        "type": "mono",
+        "dir": "in"
+      },
+      {
+        "type": "float",
+        "dir": "out",
+        "label": "Momentary",
+        "ref": "lufs"
+      },
+      {
+        "type": "db",
+        "dir": "out",
+        "label": "RMS",
+        "ref": "rms"
+      }
+    ],
+    "controls": []
   }
 ]
