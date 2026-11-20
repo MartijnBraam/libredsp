@@ -530,6 +530,11 @@ class NodeEditor {
                 }
             }
             if (selectedNode === null) {
+                this.mode = M_BOX;
+                this.pressx = event.offsetX;
+                this.pressy = event.offsetY;
+                this.movex = this.pressx;
+                this.movey = this.pressy;
                 this.repaint();
                 return;
             }
@@ -646,6 +651,11 @@ class NodeEditor {
                     this.controlNode.controls[this.controlIdx].mouseMove(nsx, nsy, event);
                     this.repaint();
                     break;
+                case M_BOX:
+                    this.movex = event.offsetX;
+                    this.movey = event.offsetY;
+                    this.repaint();
+                    break;
                 case M_MOVE:
                     for (let i = 0; i < this.nodes.length; i++) {
                         const node = this.nodes[i];
@@ -720,6 +730,22 @@ class NodeEditor {
                     break;
                 case M_CONTROL:
                     release = this.controlNode.controls[this.controlIdx].mouseUp(nsx, nsy, event);
+                    break;
+                case M_BOX:
+                    let nsleft = (Math.min(this.pressx, this.movex) - this.panx) / this.zoom;
+                    let nstop = (Math.min(this.pressy, this.movey) - this.pany) / this.zoom;
+                    let nsright = (Math.max(this.pressx, this.movex) - this.panx) / this.zoom;
+                    let nsbottom = (Math.max(this.pressy, this.movey) - this.pany) / this.zoom;
+                    console.log("BOX", nsleft, nstop, nsright, nsbottom);
+                    for (let i = 0; i < this.nodes.length; i++) {
+                        const node = this.nodes[i];
+                        node.selected = false;
+                        if (node.x > nsright) continue;
+                        if (node.y > nsbottom) continue;
+                        if (node.x + node.width < nsleft) continue;
+                        if (node.y + node.getHeight() + GRID < nstop) continue;
+                        node.selected = true;
+                    }
                     break;
             }
             if (release) {
@@ -1134,6 +1160,16 @@ class NodeEditor {
 
         for (let i = 0; i < this.nodes.length; i++) {
             this.drawNode(i, this.nodes[i]);
+        }
+
+        if (this.mode === M_BOX) {
+            this.ctx.save();
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            this.ctx.beginPath()
+            this.ctx.rect(this.pressx, this.pressy, this.movex - this.pressx, this.movey - this.pressy);
+            this.ctx.fill();
+            this.ctx.stroke();
+            this.ctx.restore();
         }
     }
 }
