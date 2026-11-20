@@ -736,7 +736,7 @@ class NodeEditor {
                     let nstop = (Math.min(this.pressy, this.movey) - this.pany) / this.zoom;
                     let nsright = (Math.max(this.pressx, this.movex) - this.panx) / this.zoom;
                     let nsbottom = (Math.max(this.pressy, this.movey) - this.pany) / this.zoom;
-                    console.log("BOX", nsleft, nstop, nsright, nsbottom);
+
                     for (let i = 0; i < this.nodes.length; i++) {
                         const node = this.nodes[i];
                         node.selected = false;
