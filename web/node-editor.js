@@ -16,6 +16,7 @@ const M_VALUE = 6;
 const M_CUT = 7;
 const M_CONTROL = 8;
 const M_RESIZE = 9;
+const M_TEXTBOX = 10;
 
 function drawTriangle(ctx, x, y, size, down, color) {
     ctx.save();
@@ -45,8 +46,13 @@ function drawCheck(ctx, x, y, size, color) {
     ctx.stroke();
 }
 
-function remap(value, low1, high1, low2, high2) {
-    return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
+function remap(value, low1, high1, low2, high2, clamp = false) {
+    let mapped = low2 + (high2 - low2) * (value - low1) / (high1 - low1);
+    if (clamp) {
+        mapped = mapped < low2 ? low2 : mapped;
+        mapped = mapped > high2 ? high2 : mapped;
+    }
+    return mapped;
 }
 
 export class Control {
@@ -104,6 +110,7 @@ export class SocketOutput extends Socket {
 export class SocketInput extends Socket {
     constructor(ref, label, type, value, min, max, editable) {
         super(1, true, type);
+        this.editor = undefined;
         this.ref = ref;
         this.label = label;
         this.value = value;
@@ -117,6 +124,8 @@ export class SocketInput extends Socket {
 
         this.w = 1;
         this.s = 1;
+        this.x = 0;
+        this.y = 0;
 
         this.events = {
             'change': []
@@ -143,6 +152,10 @@ export class SocketInput extends Socket {
     }
 
     mouseDown(nsx, nsy, event) {
+        if (this.isConnected) {
+            return false;
+        }
+
         this.startx = nsx;
         this.startv = this.value;
         this.moving = false;
@@ -169,13 +182,19 @@ export class SocketInput extends Socket {
     mouseUp(nsx, nsy, event) {
         this.moving = false;
         if (nsx === this.startx) {
-            console.log("TODO: spawn form field to enter exact value");
+            this.editor.spawnInput(this.x, this.y, this.w, this.formatter(this.value), (newvalue) => {
+                let value = parseFloat(newvalue.trim());
+                this.raise('change', {'value': value});
+                this.value = value;
+            });
         }
     }
 
     draw(ctx, x, y, w, scale, connected) {
         const m = 10.0 * scale;
         this.w = w;
+        this.x = x;
+        this.y = y;
         this.s = scale;
         this.isConnected = connected;
         if (connected || !this.editable) {
@@ -196,7 +215,7 @@ export class SocketInput extends Socket {
 
             if (this.value > this.min) {
                 ctx.fillStyle = '#4772b3';
-                const factor = remap(this.value, this.min, this.max, 0, width);
+                const factor = remap(this.value, this.min, this.max, 0, width, true);
                 ctx.beginPath();
                 let r = [4 * scale, 4 * scale, 4 * scale, 4 * scale];
                 if (factor < (width * 0.9)) {
@@ -377,6 +396,7 @@ class ControlMatrix extends Control {
 
 export class Node {
     constructor(x, y, width, color, id, title, sockets, controls) {
+        this.editor = undefined;
         this.x = x;
         this.y = y;
         this.width = width;
@@ -402,6 +422,13 @@ export class Node {
             height += this.sockets[i].height;
         }
         return height * GRID;
+    }
+
+    setEditor(editor) {
+        this.editor = editor;
+        for (let i = 0; i < this.sockets.length; i++) {
+            this.sockets[i].editor = editor;
+        }
     }
 }
 
@@ -447,6 +474,8 @@ class NodeEditor {
         this.nodes = [];
         this.links = [];
 
+        this.inputBox = null;
+
         this.events = {
             'node-add': [],
             'node-remove': [],
@@ -479,6 +508,12 @@ class NodeEditor {
 
         this.el.addEventListener('mousedown', (event) => {
             event.preventDefault();
+            if (this.inputBox !== null) {
+                this.el.parentNode.removeChild(this.inputBox);
+                this.inputBox = null;
+                this.mode = M_NONE;
+            }
+
             if (event.button !== 0) {
                 return;
             }
@@ -710,6 +745,7 @@ class NodeEditor {
     }
 
     AddNode(node) {
+        node.setEditor(this);
         this.nodes.push(node);
         this.repaint();
         this.raiseEvent('node-add', node);
@@ -752,6 +788,42 @@ class NodeEditor {
             return max_val;
         }
         return val;
+    }
+
+    spawnInput(x, y, w, value, callback) {
+        if (this.inputBox !== null) {
+            this.el.parentNode.removeChild(this.inputBox);
+        }
+        const epos = this.el.getBoundingClientRect();
+        const input = document.createElement("input");
+        input.style.position = 'absolute';
+        input.style.left = (x + epos.x + (10.0 * this.zoom)) + 'px';
+        input.style.top = (y + epos.y + (2.0 * this.zoom)) + 'px';
+        input.style.width = (w - 20.0 * this.zoom) + 'px';
+        input.style.height = ((GRID - 4) * this.zoom) + 'px';
+        input.style.backgroundColor = '#222';
+        input.style.borderRadius = (4 * this.zoom) + 'px';
+        input.style.fontSize = (11 * this.zoom) + 'px';
+        input.style.color = 'white';
+        input.style.border = 'none';
+        input.style.outline = 'none';
+        input.style.paddingLeft = "10px";
+        input.value = value;
+
+        input.addEventListener('keyup', (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                callback(input.value + "");
+                this.el.parentNode.removeChild(this.inputBox);
+                this.inputBox = null;
+                this.repaint();
+            }
+        });
+
+        this.inputBox = input;
+        this.el.parentNode.appendChild(input);
+        input.select();
+        this.mode = M_TEXTBOX;
     }
 
     findLinks(fromInput, node, socket) {
